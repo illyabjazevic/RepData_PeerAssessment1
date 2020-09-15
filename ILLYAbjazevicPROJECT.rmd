@@ -1,0 +1,155 @@
+---
+title: "Project 1 Reproducible Research"
+author: "Illya Pavao Bjazevic"
+date: "9/8/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("tidyverse")
+```
+
+### 1. Code for reading in the dataset and/or processing the data.
+
+We need to download all the data that we will user for this homework.
+
+
+
+```{r}
+# Download the data from the url of the homework.
+
+download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip", destfile = "myData.zip", mode="wb")
+
+# Unzip the file, 
+# if we have not already extracted the CSV file 
+# activity.csv
+# Otherwise, do nothing.
+
+if (!file.exists("activity.csv") ) {unzip("myData.zip")}
+
+originalDataFrame <- read.csv("activity.csv", header = TRUE)
+
+
+#We create a DataFrame without NA values
+
+originalDataframeWITHOUTnaVALUES <- originalDataFrame[!is.na(originalDataFrame$steps),]
+
+# We create a DATAFRAME with the steps per day
+# using the 
+# Aggregate function
+
+TOTALstepsPerDayDATAFRAMEwithoutNAvalues <- aggregate(steps ~ date, originalDataframeWITHOUTnaVALUES, FUN=sum)
+
+```
+
+### This is the data that we analyze in this project. This is a DATAFRAME without the NA values that contains a column with the total of STEPS PER DAY.
+
+```{r}
+#1. This is the data that we analyze in this project. This is a DATAFRAME without the NA values that contains a column with the total of STEPS PER DAY.
+
+str(TOTALstepsPerDayDATAFRAMEwithoutNAvalues)
+head(TOTALstepsPerDayDATAFRAMEwithoutNAvalues)
+```
+
+### 2.Histogram of the total number of steps taken each day of TOTALstepsPerDayDATAFRAMEwithoutNAvalues.
+
+```{r}
+#2. Histogram of the total number of steps taken each day of TOTALstepsPerDayDATAFRAMEwithoutNAvalues.
+
+hist(TOTALstepsPerDayDATAFRAMEwithoutNAvalues$steps, main = "Histogram TOTALstepsPerDayDATAFRAMEwithoutNAvalues", xlab = "TOTALstepsPerDay")
+```
+
+### 3.Mean and median TOTALstepsPerDayDATAFRAMEwithoutNAvalues.
+
+```{r}
+#3. Mean and median TOTALstepsPerDayDATAFRAMEwithoutNAvalues.
+
+mean(TOTALstepsPerDayDATAFRAMEwithoutNAvalues$steps)
+median(TOTALstepsPerDayDATAFRAMEwithoutNAvalues$steps)
+
+```
+
+### 4.Time series plot of the average number of steps taken originalDataframeWITHOUTnaVALUES
+
+```{r}
+# 4.Time series plot of the average number of steps taken originalDataframeWITHOUTnaVALUES
+
+averageTOTALstepsPerDayDATAFRAMEwithoutNAvalues <- aggregate(steps ~ interval, originalDataframeWITHOUTnaVALUES, mean)
+
+str(averageTOTALstepsPerDayDATAFRAMEwithoutNAvalues)
+head(averageTOTALstepsPerDayDATAFRAMEwithoutNAvalues)
+
+plot(averageTOTALstepsPerDayDATAFRAMEwithoutNAvalues$interval, averageTOTALstepsPerDayDATAFRAMEwithoutNAvalues$steps, type='l', col=1, main="averageTOTALstepsPerDayDATAFRAMEwithoutNAvalues")
+
+
+```
+
+### 5.The 5-minute interval that, on average, contains the maximum number of steps
+
+```{r}
+
+#5.The 5-minute interval that, on average, contains the maximum number of steps. (MAXIMUM VALUE AND POSITION OF THE MAXIMUM VALUE)
+
+#MAXIMUM VALUE
+MAXIMUM <-max(averageTOTALstepsPerDayDATAFRAMEwithoutNAvalues$steps)
+MAXIMUM
+
+#POSITION OF THE MAXIMUM VALUE
+which(grepl(MAXIMUM, averageTOTALstepsPerDayDATAFRAMEwithoutNAvalues$steps))
+
+```
+
+### 6.Replace NA values with the mean of the set. Code to describe and show a strategy for imputing missing data
+
+
+
+```{r}
+
+#6.Replace NA values with the mean of the set. Code to describe and show a strategy for imputing missing data
+
+MEANofTHEset<-mean(originalDataframeWITHOUTnaVALUES$steps)
+MEANofTHEset
+
+#x[is.na(x)] <- 0
+OPTIMIZATIONoriginalDataFrame <- read.csv("activity.csv", header = TRUE)
+OPTIMIZATIONoriginalDataFrame$steps[is.na(OPTIMIZATIONoriginalDataFrame$steps)]<-MEANofTHEset
+str(OPTIMIZATIONoriginalDataFrame)
+head(OPTIMIZATIONoriginalDataFrame)
+
+```
+
+
+### 7.Histogram of the total number of steps taken each day after missing values are imputed
+
+```{r}
+#7.Histogram of the total number of steps taken each day after missing values are imputed
+
+hist(OPTIMIZATIONoriginalDataFrame$steps, main = "Histogram OPTIMIZATIONoriginalDataFrame", xlab = "TOTALstepsPerDay")
+
+```
+
+### 8.Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
+
+```{r}
+#8.Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
+library(chron)
+#x[is.weekend(x)] check if a day is a weekend
+OPTIMIZATIONoriginalDataFrame$date[is.weekend(OPTIMIZATIONoriginalDataFrame$date)]<- 'Weekend'
+OPTIMIZATIONoriginalDataFrame$date[!is.weekend(OPTIMIZATIONoriginalDataFrame$date)]<- 'Weekday'
+
+weekendDATAFRAME<-OPTIMIZATIONoriginalDataFrame[OPTIMIZATIONoriginalDataFrame$date == 'Weekend',]
+
+averageWEEKEND <- aggregate(steps ~ interval, weekendDATAFRAME, mean)
+
+plot(averageWEEKEND$interval, averageWEEKEND$steps, type='l', col=1, main="averageWEEKEND")
+
+weekdayDATAFRAME<-OPTIMIZATIONoriginalDataFrame[OPTIMIZATIONoriginalDataFrame$date == 'Weekday',]
+
+averageWEEKDAY <- aggregate(steps ~ interval, weekdayDATAFRAME, mean)
+
+plot(averageWEEKDAY$interval, averageWEEKDAY$steps, type='l', col=1, main="averageWEEKDAY")
+
+
+```
+
